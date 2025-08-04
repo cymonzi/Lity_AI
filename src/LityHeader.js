@@ -4,19 +4,19 @@ import { MessageSquare, Sun, Moon } from 'lucide-react';
 export default function LityHeader({ darkMode, backendHealthy, setDarkMode, showActions, setShowActions }) {
   const theme = darkMode
     ? {
-        accent: '#0ea5e9',
+        accent: '#14b8a6', // teal accent
         heading: '#f1f5f9',
         border: '#334155',
         bg: 'rgba(30, 41, 59, 0.8)',
-        status: '#38bdf8',
+        status: '#14b8a6', // teal status
         offline: '#ef4444',
       }
     : {
-        accent: '#0ea5e9',
+        accent: '#14b8a6', // teal accent
         heading: '#0f172a',
         border: '#e2e8f0',
         bg: 'rgba(255, 255, 255, 0.8)',
-        status: '#0ea5e9',
+        status: '#14b8a6', // teal status
         offline: '#ef4444',
       };
 

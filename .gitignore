@@ -1,20 +1,84 @@
+# Dependencies
 node_modules/
+package-lock.json
+
+# Production build
 build/
 dist/
-*.log
-*.zip
-.DS_Store
+
+# Environment files
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
 *.pyc
 __pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Model files (too large for GitHub)
+*.safetensors
+*.bin
+*.h5
+*.pkl
+*.pt
+*.pth
+*.model
+lity-ai-final-model/
+smk_moneykind_dialoGPT/
+*.zip
+
+# Training data
+*.jsonl
+Training_Dataset.jsonl
+Enhanced_Training_Dataset.jsonl
+SMK_Moneykind_Custom_Dataset.jsonl
+
+# Database files
 *.sqlite3
 *.db
-*.pkl
-*.h5
-*.tar.gz
-*.tgz
+
+# Temporary files
+*.tmp
+*.temp
 *.bak
 *.swp
 *.swo
-*.tmp
-package-lock.json
+
+# Archive files
+*.tar.gz
+*.tgz
+*.rar
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Cache
+.cache/
