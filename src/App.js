@@ -1,10 +1,10 @@
 import React from 'react';
-import SMKChatbot from './SMKChatbot';
+import LityAI from './LityAI';
 
 function App() {
   return (
     <div>
-      <SMKChatbot />
+      <LityAI />
     </div>
   );
 }
