@@ -8,40 +8,117 @@ import { chatWithBot, checkBackendHealth } from './chatLogic';
 import { findBestFAQMatch } from './enhancedFAQ';
 
 const QUICK_PROMPTS = [
-  { label: 'Build my first budget', query: 'How do I create a simple monthly budget?' },
-  { label: 'Explain compound interest', query: 'What is compound interest in simple terms?' },
-  { label: 'Start saving consistently', query: 'How can I save money consistently every month?' },
-  { label: 'Investment basics', query: 'What are the basics of investing for beginners?' },
-  { label: 'Cut unnecessary expenses', query: 'How do I reduce unnecessary spending each month?' },
-  { label: 'Build an emergency fund', query: 'How can I build a 3-month emergency fund?' },
+  { label: 'Spend 200k this week?', query: 'Should I spend UGX 200,000 this week or hold it?' },
+  { label: 'Can I afford rent next month?', query: 'Can I afford 500,000 UGX rent next month with my current income?' },
+  { label: 'How should I divide my salary?', query: 'I just got paid. How should I divide my salary this month?' },
+  { label: 'What to do with 300k', query: 'I have UGX 300,000 now. What is my best next money move?' },
+  { label: 'Take this loan or not?', query: 'Should I take this loan now or wait two weeks?' },
+  { label: 'Start saving this month', query: 'Help me start saving this month with a simple plan.' },
 ];
 
-function getTimeBasedSuggestions(focus) {
-  const hour = new Date().getHours();
-  const morning = hour >= 5 && hour < 12;
-  const evening = hour >= 18;
+function pickUnique(items, count = 4) {
+  return [...new Set(items)].slice(0, count);
+}
 
-  if (morning) {
-    return ['Plan today\'s spending', 'Quick saving tip', 'Ask a money question'];
+function isGreeting(text) {
+  return /^(hi|hello|hey|hi lity|hello lity)\b/.test(text.trim().toLowerCase());
+}
+
+function isRegularityAnswer(text) {
+  const t = text.trim().toLowerCase();
+  return /^(regular|my income is regular|irregular|my income is irregular)$/.test(t);
+}
+
+function inferDecisionTopic(text) {
+  const t = text.toLowerCase();
+  if (/(rent|afford)/.test(t)) return 'rent and buffer';
+  if (/(salary|income|paid|paycheck)/.test(t)) return 'salary plan';
+  if (/(save|saving|emergency)/.test(t)) return 'savings plan';
+  if (/(invest|investment)/.test(t)) return 'investing';
+  if (/(loan|debt|borrow)/.test(t)) return 'debt decision';
+  return '';
+}
+
+function getContextualSuggestions(messages, decisionContext, hasHistory, decisionHistory) {
+  const userMessages = messages.filter((m) => m.sender === 'user').map((m) => m.text.toLowerCase());
+
+  if (decisionContext.awaiting === 'income-pattern') {
+    return ['My income is regular', 'My income is irregular'];
   }
 
-  if (evening) {
-    return ['Log today\'s expenses', 'Review today\'s spending', 'Plan tomorrow\'s budget'];
+  if (decisionContext.awaiting === 'buffer-choice') {
+    return ['Yes, calculate buffer', 'No, I\'ll manage'];
   }
 
-  const byFocus = {
-    Budgeting: ['Create a monthly budget for me', 'How should I budget my salary?', 'Fix my overspending'],
-    'Saving money': ['Help me save 500k', 'Build a 30-day savings plan', 'Where should I keep savings?'],
-    Investing: ['Explain compound interest', 'How do I start investing?', 'Beginner investment mistakes to avoid'],
-    'Tracking expenses': ['Track my expenses', 'Set expense categories for me', 'How do I cut unnecessary costs?'],
-  };
+  // First-time users: high-probability decision scenarios, not generic prompts.
+  if (userMessages.length === 0) {
+    if (hasHistory) {
+      const historyText = (decisionHistory || []).join(' ').toLowerCase();
+      if (/(invest|leftover|surplus)/.test(historyText)) {
+        return [
+          'Adjust my budget',
+          'Next best money move',
+          'Invest this leftover UGX?',
+        ];
+      }
 
-  return byFocus[focus] || [
-    'Create a monthly budget for me',
-    'Help me save 500k',
-    'Explain investing simply',
-    'Track my expenses',
-  ];
+      return [
+        'Next best move for my salary',
+        'Can I spend 200k this week?',
+        'How much should I save this month?',
+      ];
+    }
+
+    return [
+      'Spend 200k this week?',
+      'Can I afford rent next month?',
+      'Divide my salary',
+      'What to do with 300k',
+    ];
+  }
+
+  const allText = userMessages.join(' ');
+  const lastUser = userMessages[userMessages.length - 1] || '';
+  const dayOfMonth = new Date().getDate();
+  const suggestions = [];
+
+  if (/(phone|buy|purchase|shopping|spend)/.test(lastUser)) {
+    suggestions.push('What if I wait 2 weeks?');
+    suggestions.push('Cheaper alternative options?');
+    suggestions.push('Save before buying?');
+  }
+
+  if (/(salary|income|paid|paycheck)/.test(allText)) {
+    suggestions.push('Divide my next salary');
+    suggestions.push('How much should I save?');
+  }
+
+  if (/(budget|expense|overspend|rent|bills)/.test(allText)) {
+    suggestions.push('Adjust my budget');
+    suggestions.push('Am I overspending?');
+    suggestions.push('Can I afford this?');
+  }
+
+  if (/(loan|debt|borrow)/.test(allText)) {
+    suggestions.push('Can I handle repayments?');
+    suggestions.push('Should I delay this loan?');
+  }
+
+  if (/(save|saving|invest|investment)/.test(allText)) {
+    suggestions.push('Next best money move');
+    suggestions.push('Save or invest first?');
+  }
+
+  if (dayOfMonth >= 25) {
+    suggestions.push('Can I close month on budget?');
+  }
+
+  suggestions.push('Next best money move');
+  suggestions.push('Can I afford this?');
+  suggestions.push('Adjust my budget');
+  suggestions.push('Am I overspending?');
+
+  return pickUnique(suggestions, 4);
 }
 
 function getTheme(dark) {
@@ -89,8 +166,22 @@ function LityAI() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [chats, setChats] = useState([]);
-  const [currentChatId, setCurrentChatId] = useState(null);
+  const [chats, setChats] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem('lity_chats');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.slice(0, 50) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [currentChatId, setCurrentChatId] = useState(() => {
+    try {
+      return window.localStorage.getItem('lity_current_chat_id');
+    } catch {
+      return null;
+    }
+  });
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,6 +189,24 @@ function LityAI() {
   const [streamedText, setStreamedText] = useState('');
   const [backendHealthy, setBackendHealthy] = useState(false);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [decisionContext, setDecisionContext] = useState({ awaiting: '', topic: '' });
+  const [decisionHistory, setDecisionHistory] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem('lity_decision_history');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.slice(-10) : [];
+    } catch {
+      return [];
+    }
+  });
+  const userStage = decisionHistory.length > 0 ? 'returning' : 'first-time';
+  const [lastTopic, setLastTopic] = useState(() => {
+    try {
+      return window.localStorage.getItem('lity_last_topic') || '';
+    } catch {
+      return '';
+    }
+  });
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -118,6 +227,31 @@ function LityAI() {
 
   useEffect(() => { checkBackendHealth().then(setBackendHealthy); }, []);
   useEffect(() => {
+    try {
+      window.localStorage.setItem('lity_chats', JSON.stringify(chats.slice(0, 50)));
+    } catch {
+      // Ignore storage failures
+    }
+  }, [chats]);
+  useEffect(() => {
+    try {
+      if (currentChatId) {
+        window.localStorage.setItem('lity_current_chat_id', currentChatId);
+      } else {
+        window.localStorage.removeItem('lity_current_chat_id');
+      }
+    } catch {
+      // Ignore storage failures
+    }
+  }, [currentChatId]);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('lity_decision_history', JSON.stringify(decisionHistory.slice(-10)));
+    } catch {
+      // Ignore storage failures
+    }
+  }, [decisionHistory]);
+  useEffect(() => {
     if (lockAutoScrollRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamedText]);
@@ -126,37 +260,139 @@ function LityAI() {
     return findBestFAQMatch(input);
   }, []);
 
+  const shouldUseFAQ = useCallback((text) => {
+    const lower = text.toLowerCase().trim();
+    const wordCount = lower.split(/\s+/).filter(Boolean).length;
+    const hasNumber = /\d/.test(lower);
+    const directChipMatch = QUICK_PROMPTS.some(
+      (p) => p.label.toLowerCase() === lower || p.query.toLowerCase() === lower
+    );
+
+    // FAQ should only handle short, keyword-like inputs.
+    return directChipMatch || (wordCount <= 3 && !hasNumber);
+  }, []);
+
   const fallbackResponse = useCallback((input) => {
     const lower = input.toLowerCase();
-    const financeWords = ['money','budget','save','invest','loan','bank','finance','profit','income','expense','debt','credit','tax','insurance','stock'];
-    if (financeWords.some(w => lower.includes(w))) {
-      return `Good question! Here's what I can help with on that topic:\n\n- **Budgeting** â€” simple plans like 50/30/20\n- **Saving** â€” practical methods to save consistently\n- **Investing** â€” beginner-friendly investing basics\n- **Debt & Expenses** â€” cut costs and repay debt faster\n\nTry: "How do I start budgeting?" or "What is compound interest?"`;
+    const financeWords = ['money','budget','save','invest','loan','bank','finance','income','expense','debt','tax','insurance','stock','uganda','ugx','momo','airtel','sacco'];
+
+    if (/(can i afford|afford|rent)/.test(lower) && /\d/.test(lower) && /(next month|this month|week|today|tomorrow)/.test(lower)) {
+      return 'Good question. You can estimate this now: if that rent leaves enough for essentials plus a buffer, it is manageable; if it eats most of your monthly cash, it is risky. Share your expected income next month in UGX and I will give you a clear yes/no.';
     }
-    return `I'm Lity AI, focused on **financial literacy**.\n\nAsk me about budgeting, saving, investing, debt, taxes, expenses, and financial habits.`;
+
+    if (financeWords.some(w => lower.includes(w))) {
+      return 'You already gave a useful money question. I will work with what you shared and give a direct recommendation. If one critical detail is missing, I will ask one short follow-up.';
+    }
+    return 'I am Lity - your financial decision support system. Tell me what you are deciding and I will help you move it forward immediately.';
   }, []);
 
   const resolveReply = useCallback(async (text) => {
-    let reply = findFAQMatch(text) || '';
-    if (!reply && backendHealthy) {
+    const lower = text.toLowerCase().trim();
+
+    if (isGreeting(lower)) {
+      if (lastTopic) {
+        return `Welcome back! Last time we checked your ${lastTopic}.\n\nWhat money decision are you working on today?`;
+      }
+      return 'Hello! I\'m Lity - your financial decision support AI. I help you make smart money moves fast.\n\nWhat financial decision are you working on right now?';
+    }
+
+    if (decisionContext.awaiting === 'income-pattern' && isRegularityAnswer(lower)) {
+      const regular = lower.includes('regular') && !lower.includes('irregular');
+      setDecisionContext({ awaiting: 'buffer-choice', topic: 'rent and buffer' });
       try {
-        const ai = await chatWithBot(text);
-        if (ai && ai.length > 15 && !ai.toLowerCase().includes("i don't know")) reply = ai;
+        window.localStorage.setItem('lity_last_topic', 'rent and buffer');
+      } catch {
+        // Ignore storage failures
+      }
+      setLastTopic('rent and buffer');
+
+      if (regular) {
+        return 'Great! Here is the assessment:\n\nIf your income comfortably covers rent and still leaves room for food, transport, and a small buffer, you are in a safe zone. A good rule is to keep rent around 30-40% of monthly income.\n\nIf it feels tight, reduce discretionary spending this month and build a small buffer before paying rent.\n\nDo you want me to calculate exactly how much buffer you should have?';
+      }
+
+      return 'Thanks - that helps. With irregular income, this rent decision is higher risk unless you keep a stronger buffer. Try to keep at least one month of essentials before committing and avoid locking into costs that depend on your best month.\n\nDo you want me to calculate a safer buffer target for you?';
+    }
+
+    if (decisionContext.awaiting === 'buffer-choice' && /(yes|calculate)/.test(lower)) {
+      return 'Perfect. Share your expected monthly take-home income in UGX and your target rent amount, and I will calculate the exact buffer you should keep before paying rent.';
+    }
+
+    if (decisionContext.awaiting === 'buffer-choice' && /(no|manage|i\'ll manage|ill manage)/.test(lower)) {
+      setDecisionContext({ awaiting: '', topic: decisionContext.topic || 'rent and buffer' });
+      return 'Good plan. Keep rent disciplined, protect a small buffer, and review your cash flow weekly so pressure does not build quietly.';
+    }
+
+    if (/(can i afford|afford|rent)/.test(lower) && /\d/.test(lower) && /(next month|this month|week|today|tomorrow)/.test(lower)) {
+      setDecisionContext({ awaiting: 'income-pattern', topic: 'rent and buffer' });
+      try {
+        window.localStorage.setItem('lity_last_topic', 'rent and buffer');
+      } catch {
+        // Ignore storage failures
+      }
+      setLastTopic('rent and buffer');
+
+      return '500,000 UGX for rent next month is a big commitment.\n\nTo give you the clearest advice, I just need a quick check: is your income regular (comes in every month) or irregular?';
+    }
+
+    if (backendHealthy) {
+      try {
+        const ai = await chatWithBot(text, {
+          stage: userStage,
+          recentDecisions: decisionHistory.slice(-5),
+          topic: decisionContext.topic,
+        });
+        if (ai && ai.length > 15 && !ai.toLowerCase().includes("i don't know")) {
+          const topic = inferDecisionTopic(text);
+          if (topic) {
+            setDecisionContext((prev) => ({ ...prev, awaiting: '', topic }));
+            try {
+              window.localStorage.setItem('lity_last_topic', topic);
+            } catch {
+              // Ignore storage failures
+            }
+            setLastTopic(topic);
+          }
+          return ai;
+        }
       } catch {
         // fall through
       }
     }
-    return reply || fallbackResponse(text);
-  }, [backendHealthy, findFAQMatch, fallbackResponse]);
+
+    if (shouldUseFAQ(text)) {
+      const faqReply = findFAQMatch(text);
+      if (faqReply) return faqReply;
+    }
+
+    return fallbackResponse(text);
+  }, [backendHealthy, decisionContext.awaiting, decisionContext.topic, decisionHistory, fallbackResponse, findFAQMatch, lastTopic, shouldUseFAQ, userStage]);
+
+  const recordDecision = useCallback((text) => {
+    const topic = inferDecisionTopic(text) || text.trim().slice(0, 60);
+    if (!topic) return;
+    setDecisionHistory((prev) => {
+      const next = [...prev, topic];
+      return next.slice(-10);
+    });
+  }, []);
 
   const updateCurrentChatMessages = useCallback((nextMessages, titleHint) => {
     if (!currentChatId) {
       const chatId = Date.now().toString();
       setCurrentChatId(chatId);
-      setChats(prev => [{ id: chatId, title: (titleHint || 'New chat').slice(0, 40), messages: nextMessages }, ...prev]);
+      setChats(prev => [{
+        id: chatId,
+        title: (titleHint || 'New chat').slice(0, 40),
+        messages: nextMessages,
+        updatedAt: Date.now(),
+      }, ...prev]);
       return chatId;
     }
 
-    setChats(prev => prev.map(c => (c.id === currentChatId ? { ...c, messages: nextMessages } : c)));
+    setChats(prev => {
+      const updated = prev.map(c => (c.id === currentChatId ? { ...c, messages: nextMessages, updatedAt: Date.now() } : c));
+      return [...updated].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    });
     return currentChatId;
   }, [currentChatId]);
 
@@ -165,7 +401,7 @@ function LityAI() {
     setStreaming(true);
     let i = 0;
     streamRef.current = setInterval(() => {
-      i += 2;
+      i += 8;
       setStreamedText(reply.slice(0, i));
       if (i >= reply.length) {
         clearInterval(streamRef.current);
@@ -184,7 +420,7 @@ function LityAI() {
           });
         }
       }
-    }, 12);
+    }, 6);
   }, [updateCurrentChatMessages]);
 
   const handleSend = useCallback(async (overrideText) => {
@@ -194,6 +430,7 @@ function LityAI() {
 
     const userMsg = { id: Date.now(), sender: 'user', text, timestamp: new Date() };
     const updatedMessages = [...messages, userMsg];
+    recordDecision(text);
     setMessages(updatedMessages);
     setShowLandingPage(false);
     setLoading(true);
@@ -208,7 +445,7 @@ function LityAI() {
       setStreaming(false);
       setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: fallbackResponse(text), timestamp: new Date() }]);
     }
-  }, [input, loading, streaming, messages, resolveReply, streamReplyIntoMessages, fallbackResponse, updateCurrentChatMessages]);
+  }, [input, loading, streaming, messages, recordDecision, resolveReply, streamReplyIntoMessages, fallbackResponse, updateCurrentChatMessages]);
 
   const handleStop = () => {
     clearInterval(streamRef.current);
@@ -303,6 +540,7 @@ function LityAI() {
   const handleNewChat = () => {
     setCurrentChatId(null);
     setMessages([]);
+    setDecisionContext({ awaiting: '', topic: '' });
     setInput('');
     if (isMobile) setSidebarOpen(false);
   };
@@ -318,7 +556,7 @@ function LityAI() {
     if (currentChatId === id) handleNewChat();
   };
 
-  const dynamicSuggestions = getTimeBasedSuggestions();
+  const dynamicSuggestions = getContextualSuggestions(messages, decisionContext, Boolean(lastTopic), decisionHistory);
 
   if (showLandingPage) {
     return (
@@ -327,7 +565,7 @@ function LityAI() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100vh',
+        height: '100dvh',
         width: '100vw',
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -363,7 +601,7 @@ function LityAI() {
             }}>L</div>
             <h1 style={{ margin: '0', fontSize: '24px', fontWeight: '700' }}>Lity AI</h1>
             <p style={{ margin: '4px 0 0', color: theme.subtext, fontSize: '13px', padding: '0 16px' }}>
-              Your AI guide for smarter money decisions.
+              Financial decision support for real money choices.
             </p>
           </div>
 
@@ -385,7 +623,7 @@ function LityAI() {
                 handleStop={handleStop}
                 theme={theme}
                 inputRef={inputRef}
-                placeholder="Ask anything about money..."
+                placeholder="Ask your money decision..."
               />
             </div>
 
@@ -435,7 +673,6 @@ function LityAI() {
           </div>
         </div>
 
-        {/* Disclaimer at bottom */}
         <div style={{
           position: 'absolute',
           left: '50%',
@@ -452,7 +689,7 @@ function LityAI() {
             color: theme.subtext,
             lineHeight: '1.4',
           }}>
-            Lity AI can make mistakes. For important financial decisions, consult a professional.
+            Direct. Practical. Action-first.
           </p>
         </div>
       </div>
@@ -461,7 +698,7 @@ function LityAI() {
 
   return (
     <div style={{
-      display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden',
+      display: 'flex', height: '100dvh', width: '100vw', overflow: 'hidden',
       background: theme.bg, fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       color: theme.text, fontSize: '15px',
     }}>
@@ -470,6 +707,7 @@ function LityAI() {
         onNewChat={handleNewChat} onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat} theme={theme}
         darkMode={darkMode} setDarkMode={setDarkMode}
+        isMobile={isMobile}
       />
 
       {isMobile && sidebarOpen && (
@@ -478,12 +716,13 @@ function LityAI() {
         }} />
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '12px',
           padding: '12px 16px', borderBottom: `1px solid ${theme.border}`,
           background: theme.headerBg, flexShrink: 0,
+          position: 'sticky', top: 0, zIndex: 20,
         }}>
           <button
             onClick={() => setSidebarOpen(v => !v)}
@@ -504,7 +743,7 @@ function LityAI() {
         </div>
 
         {/* Messages area */}
-        <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '24px 0 8px', scrollBehavior: 'smooth' }}>
+        <div ref={messagesContainerRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 0 8px', scrollBehavior: 'smooth' }}>
           <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 16px' }}>
             {/* All messages */}
 
@@ -537,7 +776,7 @@ function LityAI() {
         </div>
 
         {/* Input area */}
-        <div style={{ padding: '12px 0 16px', background: theme.bg, borderTop: `1px solid ${theme.border}`, flexShrink: 0 }}>
+        <div style={{ padding: '12px 0 16px', background: theme.bg, borderTop: `1px solid ${theme.border}`, flexShrink: 0, position: 'sticky', bottom: 0, zIndex: 20 }}>
           <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 16px 10px' }}>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {dynamicSuggestions.map(prompt => (
@@ -564,7 +803,7 @@ function LityAI() {
             handleSend={() => handleSend()} loading={loading}
             streaming={streaming} handleStop={handleStop}
             theme={theme} inputRef={inputRef}
-            placeholder="Ask anything about money..."
+            placeholder="Ask your money decision in UGX..."
           />
         </div>
       </div>

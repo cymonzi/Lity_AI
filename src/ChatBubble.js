@@ -57,7 +57,20 @@ export default function ChatBubble({
             wordBreak: 'break-word',
             fontStyle: isEditNote ? 'italic' : 'normal',
           }}>
-            <ReactMarkdown>{text}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                h3: ({ children }) => (
+                  <h3 style={{ margin: '8px 0 4px', fontSize: '13px', letterSpacing: '0.06em', opacity: 0.9 }}>
+                    {children}
+                  </h3>
+                ),
+                p: ({ children }) => <p style={{ margin: '0 0 8px' }}>{children}</p>,
+                ol: ({ children }) => <ol style={{ margin: '0 0 8px 20px', padding: 0 }}>{children}</ol>,
+                li: ({ children }) => <li style={{ marginBottom: '4px' }}>{children}</li>,
+              }}
+            >
+              {text}
+            </ReactMarkdown>
           </div>
           {/* Action buttons under bot messages */}
           {!isEditNote && <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>

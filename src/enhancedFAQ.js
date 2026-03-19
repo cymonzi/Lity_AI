@@ -1,37 +1,35 @@
-// Finance-only FAQ responses for Lity AI.
-// This file intentionally excludes company/careers/partnership metadata.
+// Decision-oriented, Uganda-first FAQ responses for Lity AI.
 
 export const enhancedFAQ = {
-  'budget': 'A simple budget starts with three buckets: needs, wants, and savings. Track your income, set spending limits per bucket, and review weekly to stay on target.',
-  'how do i budget': 'List your monthly income first, then fixed costs, then variable costs. Set a realistic savings target and keep at least a small emergency amount every month.',
-  'set budget nfunayo': 'In Nfunayo, add your income, create expense categories, and set limits per category. Review your category spend weekly and adjust when needed.',
-  'save money': 'Start small and stay consistent. Automate a fixed amount after each income event, then increase your savings rate as your income grows.',
-  'how do i save': 'Use a clear savings goal, a deadline, and weekly contribution targets. Keep savings separate from daily spending so you are less tempted to use it.',
-  'set savings goals': 'Set one short-term goal and one long-term goal. Give each a target amount and date, then track progress weekly to stay motivated.',
-  'emergency fund': 'Aim for at least 3 months of essential expenses over time. Start with a mini goal first, then build steadily.',
-  'expenses': 'Track every expense for 30 days to see spending patterns. Cut low-value spending first and redirect that money to savings or debt repayment.',
-  'track expenses': 'Use categories like food, transport, bills, data, and savings. Category-level tracking helps you make faster better decisions.',
-  'debt': 'Pay minimums on all debts, then attack the highest-interest debt first. Avoid taking new debt until your repayment plan is stable.',
-  'loan': 'Before taking a loan, compare total repayment cost, interest rate, fees, and repayment flexibility. Borrow only for a clear useful purpose.',
-  'credit score': 'A stronger credit profile comes from on-time payments, low missed installments, and borrowing only what you can comfortably repay.',
-  'interest': 'Interest is the cost of borrowing or the reward for saving. Higher rates grow debt faster, so compare rates before borrowing.',
-  'compound interest': 'Compound interest means earnings generate additional earnings. Starting early and staying consistent creates stronger long-term growth.',
-  'investing': 'Investing is long-term money growth with risk. Begin with goals, time horizon, and risk level, then diversify instead of betting on one option.',
-  'how do i invest': 'Start by building an emergency fund first. Then invest regularly in diversified options that match your risk tolerance and timeline.',
-  'mobile money': 'Treat mobile money like a bank wallet: track transfers, cash-outs, and fees. Frequent fee checks help reduce hidden costs.',
-  'nfunayo': 'Nfunayo helps you track income, expenses, and savings goals so you can apply financial literacy in daily life.',
-  'litywise': 'Litywise teaches practical money skills through structured learning paths and short quizzes you can apply to real decisions.',
-  'saver role': 'Saver path focuses on basics: needs vs wants, saving habits, and smart spending decisions.',
-  'investor role': 'Investor path focuses on budgeting, risk awareness, and long-term wealth building fundamentals.',
-  'boss role': 'Boss path focuses on advanced skills: credit, debt management, taxes, business finance, and long-term planning.',
-  'xp': 'XP rewards consistent learning behavior. Use it as motivation to build steady financial habits over time.',
-  'quiz': 'Quizzes help reinforce practical money decisions. Retake missed questions and focus on why the right answer works in real life.',
-  'financial literacy': 'Financial literacy is the ability to earn, manage, save, invest, and protect money effectively for long-term stability.',
-  'insurance': 'Insurance protects you from large unexpected costs. Prioritize coverage for risks that could seriously damage your finances.',
-  'tax': 'Taxes are mandatory contributions on income or transactions. Keep records and plan ahead so tax periods do not disrupt your cash flow.',
-  'wealth': 'Wealth grows through consistent saving, smart investing, controlled debt, and disciplined long-term decisions.',
-  'income': 'Grow income by improving skills, increasing value, and adding reliable side income streams where possible.',
-  'spending': 'Spend intentionally by asking whether each purchase supports your goals. Delay non-urgent buys to reduce impulse spending.',
+  'budget': 'Set a weekly spending cap in UGX today. Open MoMo or Airtel Money, review your last 10 transfers, and label each as Need, Want, or Waste. Cut one Waste item immediately.',
+  'how do i budget': 'Use this order: income first, essentials second, savings third, wants last. Move savings first, not what is left over.',
+  'save money': 'Move UGX 20,000 now into a separate wallet or SACCO account. Repeat on the same day every week.',
+  'how do i save': 'Do not keep savings in your daily spending wallet. Separate account first, then automate a fixed transfer amount.',
+  'set savings goals': 'Pick one goal, one number, one deadline. Example: UGX 600,000 in 3 months means UGX 50,000 weekly.',
+  'emergency fund': 'Start with UGX 200,000 as a mini emergency fund. Build to 1 month of essential expenses, then 3 months.',
+  'expenses': 'Track every expense for 14 days before making a new budget. If you do not track, your plan is a guess.',
+  'track expenses': 'Check your MoMo or Airtel Money history nightly and update three buckets: essentials, wants, debt.',
+  'debt': 'Pay all minimums, then push extra cash to the highest-interest debt first. Freeze new borrowing for 30 days.',
+  'loan': 'Only take a loan if repayment stays under 20% of monthly income and the loan increases income. If not, do not take it.',
+  'interest': 'Always check total repayment, not just monthly installment. Small installments can hide expensive loans.',
+  'compound interest': 'Compound interest rewards time and consistency. Start with small monthly investing in UGX and avoid skipping months.',
+  'investing': 'Invest only after building emergency savings. Start with options you understand through a SACCO or regulated bank product.',
+  'how do i invest': 'Define amount, timeline, and risk first. Then set an automatic monthly amount you can sustain.',
+  'mobile money': 'Mobile money leaks cash through many small fees. Check weekly charges and cut unnecessary withdrawals.',
+  'momo': 'Treat MoMo like a bank account. Every transfer must have a reason or it is likely impulse spending.',
+  'airtel money': 'Use Airtel Money transaction history to spot spending leaks. Cancel one low-value habit this week.',
+  'sacco': 'A good SACCO can support disciplined saving and lower-cost credit. Confirm governance and withdrawal rules before joining.',
+  'stanbic': 'If using Stanbic, compare account fees and transfer costs before choosing where salary lands.',
+  'dfcu': 'If using DFCU, ask for total loan cost breakdown before signing any facility.',
+  'centenary': 'Centenary can be useful for savings discipline. Set a standing order so saving happens before spending.',
+  'insurance': 'Buy insurance for risks that can wipe out your cash flow, not for everything. Start with the highest impact risk first.',
+  'tax': 'Keep income and expense records weekly so tax time does not become an emergency.',
+  'income': 'Increase income with one high-value skill and one side channel. Track extra income separately so it is not absorbed by lifestyle inflation.',
+  'spending': 'Impulse spending is usually a trigger problem, not a money problem. Add a 24-hour rule before non-essential purchases.',
+  'financial literacy': 'Financial literacy means making better money decisions fast: earn, protect, grow, and avoid avoidable losses.',
+  'is this legit': 'If returns are guaranteed and unclear, treat it as a scam. Verify registration, business model, and payout source first.',
+  'save or invest': 'If you lack emergency cash, save first. If emergency fund exists, split new money between saving and investing.',
+  'should i': 'Decide using cash-flow impact first. If the decision hurts basic expenses next month, do not do it.',
 };
 
 export const financialLiteracyFAQ = enhancedFAQ;
@@ -40,8 +38,8 @@ const FINANCE_TERMS = [
   'money', 'finance', 'financial', 'budget', 'budgeting', 'save', 'saving', 'savings',
   'invest', 'investing', 'investment', 'expense', 'expenses', 'income', 'debt', 'credit',
   'loan', 'loans', 'tax', 'taxes', 'insurance', 'interest', 'compound', 'wealth', 'cash',
-  'spend', 'spending', 'mobile money', 'nfunayo', 'litywise', 'saver', 'investor', 'boss',
-  'quiz', 'xp', 'financial literacy',
+  'spend', 'spending', 'mobile money', 'momo', 'airtel', 'sacco', 'ugx', 'uganda',
+  'stanbic', 'dfcu', 'centenary', 'financial literacy', 'scam',
 ];
 
 const tokenize = (value) =>
@@ -76,7 +74,7 @@ export const findBestFAQMatch = (userInput) => {
     const overlap = inputWords.filter((word) => keyWords.includes(word)).length;
     const phraseBoost = input.includes(key) ? 2 : 0;
     const financeBoost = countTermHits(`${key} ${response}`.toLowerCase(), FINANCE_TERMS);
-    const practicalBoost = /(budget|save|invest|expense|debt|loan|interest|tax|insurance)/.test(`${key} ${response}`.toLowerCase()) ? 2 : 0;
+    const practicalBoost = /(budget|save|invest|expense|debt|loan|interest|tax|insurance|ugx|momo|airtel|sacco|scam)/.test(`${key} ${response}`.toLowerCase()) ? 2 : 0;
     const score = overlap * 3 + phraseBoost + Math.min(financeBoost, 3) + practicalBoost;
 
     if (score > bestScore) {
